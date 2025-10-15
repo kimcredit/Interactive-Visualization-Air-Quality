@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as d3 from 'd3';
+	import { stopPropagation } from 'svelte/legacy';
 	// import { X } from 'vega-lite/types_unstable/channel.js';
 
 	//resources: 
@@ -11,6 +12,7 @@
 	
 	// d3 ticks => //https://d3js.org/d3-array/ticks
 	// d3 time => //https://d3js.org/d3-time-format
+	// d3 area => https://d3js.org/d3-shape/area
 
 	// tilting axis => //https://ghenshaw-work.medium.com/customizing-axes-in-d3-js-99d58863738b
 
@@ -41,7 +43,6 @@
 		left: margin.left
 	});
 
-
 	// just for debugging; can be removed
 	$inspect(data);
 
@@ -54,7 +55,6 @@
 		{ name: 'Very Unhealthy', min: 200, max: 300, color: '#a070b6' },
 		{ name: 'Hazardous', min: 300, color: '#a06a7b' }
 	];
-
 
 	//grouping data by months 
 	const monthData = $derived(Array.from(
@@ -91,12 +91,21 @@
 			.range([usableArea.bottom, usableArea.top]) 
 	);
 
-	//line generator function using typescript type specification
+	//D3 line generator taking types, x value, and y value
 	const line = $derived(
 		d3
 			.line<{date: Date; mean : number | undefined }>()
 			.x((d) => xScale(d.date)) 
 			.y((d) => yScale(d.mean ?? 0))
+	);
+
+	//D3 area generator taking types, x value, lower y value, and upper y value
+	let area = $derived(
+		d3
+			.area<{ date: Date; firstQuantile: number | undefined; lastQuantile: number | undefined}>()
+			.x((d) => xScale(d.date))
+			.y0((d) => yScale(d.firstQuantile ?? 0))
+			.y1((d) => yScale(d.lastQuantile ?? 0))
 	);
 	
 	let xAxis = $derived(
@@ -170,7 +179,8 @@
 			opacity="0.5"
 		/>
 	{/each}
-
+	
+	<path class="shadedArea" d={area(monthData)}/>
 	<g class= "grid-lines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridLinesRef}></g>
 	<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
 	<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
@@ -180,6 +190,10 @@
 </svg>
 
 <style>
+	.shadedArea {
+		color: black;
+		opacity: .2;
+	}
 	.grid-lines {
 		color: black;
 		opacity: .1;
