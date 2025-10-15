@@ -56,23 +56,6 @@
 	];
 
 
-	
-	// //grouping data by months 
-	// const Months = $derived(Array.from(
-	// 	d3.rollup(
-	// 		data,
-	// 		//calculates the mean of AQIs for each month
-	// 		(v) => d3.mean(v, (d) => d.usAqi),
-	// 		(d) => d3.timeMonth.floor(d.timestamp)
-	// 	),
-	// 	//sets the mean to the 15th of each month to give better spacing
-	// 	([date, aqi]) => ({
-	// 		date: new Date(date.getFullYear(), date.getMonth(), 15),
-	// 		aqi
-	// 	})
-	// ));
-
-
 	//grouping data by months 
 	const monthData = $derived(Array.from(
 		d3.rollup(
@@ -93,7 +76,6 @@
 			lastQuantile: data.lastQuantile
 		})
 	));
-
 
 	let xScale = $derived(
 		d3
