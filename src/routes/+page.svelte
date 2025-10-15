@@ -20,7 +20,7 @@
 			'https://dig.cmu.edu/datavis-fall-2025/assignments/data/%5BUSA-Pennsylvania-Pittsburgh%5D_daily-avg.csv'
 	};
 
-	const selectedDataset: keyof typeof datasets = $state('avalon');
+	let selectedDataset: keyof typeof datasets = $state('lawrenceville');
 
 	const data = $derived.by(() =>
 		d3.csv(datasets[selectedDataset], (d: any) => ({
@@ -32,7 +32,7 @@
 			stationName: d['Station name'],
 			timestamp: new Date(d['Timestamp(UTC)']),
 			usAqi: +d['US AQI']
-		}))
+		}))	
 	);
 </script>
 
@@ -42,11 +42,21 @@
 {:then data}
 	<!-- promise was fulfilled or not a Promise -->
 	<h2>AQI Chart</h2>
+		
+	<select class="dropdownMenu" bind:value={selectedDataset}>
+		{#each Object.keys(datasets) as dataset}
+			<option value={dataset}>
+				{dataset}
+			</option>
+		{/each}
+	</select>
+
 	<AQIChart {data} />
 {:catch error}
 	<!-- promise was rejected -->
 	<p>Something went wrong: {error.message}</p>
 {/await}
+
 
 <style>
 	* {
