@@ -56,21 +56,44 @@
 	];
 
 
+	
+	// //grouping data by months 
+	// const Months = $derived(Array.from(
+	// 	d3.rollup(
+	// 		data,
+	// 		//calculates the mean of AQIs for each month
+	// 		(v) => d3.mean(v, (d) => d.usAqi),
+	// 		(d) => d3.timeMonth.floor(d.timestamp)
+	// 	),
+	// 	//sets the mean to the 15th of each month to give better spacing
+	// 	([date, aqi]) => ({
+	// 		date: new Date(date.getFullYear(), date.getMonth(), 15),
+	// 		aqi
+	// 	})
+	// ));
+
 
 	//grouping data by months 
-	const Months = $derived(Array.from(
+	const monthData = $derived(Array.from(
 		d3.rollup(
 			data,
 			//calculates the mean of AQIs for each month
-			(v) => d3.mean(v, (d) => d.usAqi),
+			(v) => ({
+				mean: d3.mean(v, (d) => d.usAqi),
+				firstQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.1),
+				lastQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.9)
+			}),
 			(d) => d3.timeMonth.floor(d.timestamp)
 		),
 		//sets the mean to the 15th of each month to give better spacing
-		([date, aqi]) => ({
+		([date, data]) => ({
 			date: new Date(date.getFullYear(), date.getMonth(), 15),
-			aqi
+			mean: data.mean,
+			firstQuantile: data.firstQuantile,
+			lastQuantile: data.lastQuantile
 		})
 	));
+
 
 	let xScale = $derived(
 		d3
@@ -89,11 +112,11 @@
 	//line generator function using typescript type specification
 	const line = $derived(
 		d3
-			.line<{date: Date; aqi : number | undefined }>()
+			.line<{date: Date; mean : number | undefined }>()
 			.x((d) => xScale(d.date)) 
-			.y((d) => yScale(d.aqi ?? 0))
+			.y((d) => yScale(d.mean ?? 0))
 	);
-
+	
 	let xAxis = $derived(
 		d3
 			.axisBottom(xScale) //position on bottom of x axis
@@ -170,7 +193,7 @@
 	<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
 	<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
 
-	<path d={line(Months)} fill="none" stroke = "black" stroke-width="1.5"/>
+	<path d={line(monthData)} fill="none" stroke = "black" stroke-width="1.5"/>
 	
 </svg>
 
