@@ -46,7 +46,7 @@
 	<p>loading data...</p>
 {:then data}
 	<!-- promise was fulfilled or not a Promise -->
-	<h2>AQI Chart</h2>
+	<h2 class="title">AQI Chart</h2>
 
 	<AQIChart {data} />
 {:catch error}
@@ -59,4 +59,10 @@
 	* {
 		font-family: sans-serif;
 	}
+
+	.title {
+		padding-left: 40px;
+	}
+
+	
 </style>

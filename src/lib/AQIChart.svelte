@@ -5,6 +5,7 @@
 
 	//resources: 
 	// lab tutorial => https://github.com/domoritz/svelte-d3/blob/main/src/lib/FullSVGBarChart.svelte
+	// lab 7 tutorial for showing dots
 
 	// d3 rollup => https://d3js.org/d3-array/group
 	// d3 line => https://d3js.org/d3-shape/line#_line
@@ -22,6 +23,7 @@
 	//also used google AI preview on promises for page.svelte promise
 
 	//additional debugging help from Anissa when getting started, and understanding the typescript type definitions when I was getting errors
+	//https://svelte.dev/tutorial/svelte/checkbox-inputs
 
 	interface Item {
 		city: string;
@@ -66,6 +68,8 @@
 	//default is set to lawrenceville, the station shown in the assigment example
 	let thisStation: string | null = $state("Lawrenceville");
 
+	//checkbox true/false for showing raw data
+	let dataPointsOn = $state(false);
 
 	//filter to all of current station's data (for raw data display)
 	//if a current station is selected, filter selected data to only the current station's data
@@ -159,9 +163,11 @@
 			.tickFormat(() => "")
 			.tickSize(usableArea.right - usableArea.left));
 
+
 	let xAxisRef: SVGGElement;
 	let yAxisRef: SVGGElement;
 	let yAxisGridLinesRef: SVGGElement;
+
 
 	$effect(() => {
 		if (xAxisRef && data.length > 0) {
@@ -192,28 +198,32 @@
 
 
 
-<div> 
-	Show Raw Data 
-	<input type="checkbox" />
-</div>
+
+
 
 <!-- dropdown menu that has an 'all' option showing the total data points, or options for each station. 
 when a station is selected, it changes the value of 'thisStation' to be the selected station
 when 'all selected' is seelcted, it changes the value of 'thisStation' to be null -->
-
-<select class="dropdownMenu" bind:value={thisStation}>
-	<option value={null}>
-		All Selected {data.length}
-	</option>
-	{#each stationRecordCount as station}
-		<option value={station.station}>
-			{station.station} ({station.count})
+<div class="menuItems">
+	<select class="dropdownMenu" bind:value={thisStation}>
+		<option value={null}>
+			All Selected {data.length}
 		</option>
-	{/each}
-</select>
+		{#each stationRecordCount as station}
+			<option value={station.station}>
+				{station.station} ({station.count})
+			</option>
+		{/each}
+	</select>
 
-<!-- display of the record count for the currently selected station -->
-<p class="record-count">Number of Records: {selectedData.length}</p>
+	<div class="checkbox"> 
+		<p class="checkboxLabel">Show Raw Data</p>
+		<input type="checkbox" bind:checked={dataPointsOn}/>
+	</div>
+
+	<!-- display of the record count for the currently selected station -->
+	<p class="recordCount" >Number of Records: {selectedData.length}</p>
+</div>
 
 
 <svg {width} {height}>
@@ -240,13 +250,63 @@ when 'all selected' is seelcted, it changes the value of 'thisStation' to be nul
 	<g class= "grid-lines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridLinesRef}></g>
 	<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
 	<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
+	
+	<!-- show datapoints when checkbox is checked  -->
+	{#if dataPointsOn}
+		{#each selectedData as datapoints}
+			<circle class="dataPoints"
+					cx={xScale(datapoints.timestamp)}
+					cy={yScale(datapoints.usAqi)}
+					r=".85"
+			/>
+		{/each}
+	{/if}
+	
 	<path class="stationMeanLine" d={line(findMonthData(selectedData))} />
 
-	
 </svg>
 
 
 <style>
+
+	* {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+		font-size: 10px;
+	}
+	
+	.menuItems {
+		margin-left: 40px;
+		display: flex;
+		flex-direction: column;
+		align-items: left;
+		justify-content: space-between;
+		max-width: 20%;
+	}
+
+	.dropdownMenu {
+		height: 20px;
+		max-width: 200px;
+		margin-top: 5px;
+		margin-bottom: 5px;
+	}
+
+	.checkbox {
+		display: flex;
+		align-items: center;
+		justify-content: left;
+		height: 20px;
+		padding-top: 5px;
+	}
+
+	.checkboxLabel {
+		padding-right: 10px;
+	}
+
+	.recordCount {
+		margin-top: 5px;
+
+	}
+
 	.shadedArea {
 		color: black;
 		opacity: .2;
@@ -260,6 +320,10 @@ when 'all selected' is seelcted, it changes the value of 'thisStation' to be nul
 		stroke: black;
 		fill: none;
 		stroke-width: 1.5;
+	}
+
+	.dataPoints {
+		fill: black;
 	}
 </style>
 
