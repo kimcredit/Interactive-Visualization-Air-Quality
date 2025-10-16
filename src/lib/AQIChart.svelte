@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as d3 from 'd3';
-	import { stopPropagation } from 'svelte/legacy';
+	//import { stopPropagation } from 'svelte/legacy';
 	// import { X } from 'vega-lite/types_unstable/channel.js';
 
 	//resources: 
@@ -15,7 +15,13 @@
 	// d3 area => https://d3js.org/d3-shape/area
 
 	// tilting axis => //https://ghenshaw-work.medium.com/customizing-axes-in-d3-js-99d58863738b
+	// promisees => https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
 
+	//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+	//help from Anissa on getting all data from page.svelte to aqiChart.svelte 
+	//also used google AI preview on promises for page.svelte promise
+
+	//additional debugging help from Anissa when getting started, and understanding the typescript type definitions when I was getting errors
 
 	interface Item {
 		city: string;
@@ -56,38 +62,65 @@
 		{ name: 'Hazardous', min: 300, color: '#a06a7b' }
 	];
 
-	//grouping data by months 
-	const monthData = $derived(Array.from(
+	//variable to hold current station (or null if none are selected)
+	//default is set to lawrenceville, the station shown in the assigment example
+	let thisStation: string | null = $state("Lawrenceville");
+
+
+	//filter to all of current station's data (for raw data display)
+	//if a current station is selected, filter selected data to only the current station's data
+	//otherwise, return all of the data sorted by date (fixes gaps in shading & line)
+	const selectedData = $derived(
+		thisStation 
+			? data.filter((d) => d.stationName === thisStation)
+			: data.sort((a, b) => d3.ascending(a.timestamp, b.timestamp))
+	);
+
+	//function for grouping data by months
+	function findMonthData (data: Item[]) {
+		return Array.from(
+			d3.rollup(
+				data,
+				//calculates the mean of AQIs for each month
+				(v) => ({
+					mean: d3.mean(v, (d) => d.usAqi),
+					firstQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.1),
+					lastQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.9)
+				}),
+				(d) => d3.timeMonth.floor(d.timestamp)
+			),
+			//sets the mean to the 15th of each month to give better spacing
+			([date, data]) => ({
+				date: new Date(date.getFullYear(), date.getMonth(), 15),
+				mean: data.mean,
+				firstQuantile: data.firstQuantile,
+				lastQuantile: data.lastQuantile
+			})
+		);
+	}
+
+	//count the the number of records for each station and sort stations from most to least
+	const stationRecordCount = $derived(Array.from(
 		d3.rollup(
 			data,
-			//calculates the mean of AQIs for each month
-			(v) => ({
-				mean: d3.mean(v, (d) => d.usAqi),
-				firstQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.1),
-				lastQuantile: d3.quantile(v.map((d) => d.usAqi).sort(d3.ascending), 0.9)
-			}),
-			(d) => d3.timeMonth.floor(d.timestamp)
-		),
-		//sets the mean to the 15th of each month to give better spacing
-		([date, data]) => ({
-			date: new Date(date.getFullYear(), date.getMonth(), 15),
-			mean: data.mean,
-			firstQuantile: data.firstQuantile,
-			lastQuantile: data.lastQuantile
-		})
-	));
+				(v) => v.length,
+				(d) => d.stationName
+			),
+			([station, count]) => ({station, count})
+		).sort((a, b) => d3.descending(a.count, b.count))
+	);
 
 	let xScale = $derived(
 		d3
 			.scaleTime()
 			.range([usableArea.left, usableArea.right])		
-			.domain(d3.extent(data, (d) => d.timestamp) as [Date, Date])
+			.domain(d3.extent(selectedData, (d) => d.timestamp) as [Date, Date])
 		);
 
 	let yScale = $derived(
 		d3
 			.scaleLinear() 
-			.domain([0, d3.max(data, (d) => d.usAqi) ?? 0]) 
+			.domain([0, d3.max(selectedData, (d) => d.usAqi) ?? 0]) 
 			.range([usableArea.bottom, usableArea.top]) 
 	);
 
@@ -155,16 +188,38 @@
 		}
 	})
 
-
 </script>
+
+
 
 <div> 
 	Show Raw Data 
 	<input type="checkbox" />
 </div>
 
+<!-- dropdown menu that has an 'all' option showing the total data points, or options for each station. 
+when a station is selected, it changes the value of 'thisStation' to be the selected station
+when 'all selected' is seelcted, it changes the value of 'thisStation' to be null -->
+
+<select class="dropdownMenu" bind:value={thisStation}>
+	<option value={null}>
+		All Selected {data.length}
+	</option>
+	{#each stationRecordCount as station}
+		<option value={station.station}>
+			{station.station} ({station.count})
+		</option>
+	{/each}
+</select>
+
+<!-- display of the record count for the currently selected station -->
+<p class="record-count">Number of Records: {selectedData.length}</p>
+
+
 <svg {width} {height}>
 
+	<!-- background colors as inidividual rectangles using the full x width and using the aqiLevel's min and max to set each rectangle's starting point and height
+	only show the bands if they are within the y scale height -->
 	{#each aqiLevels as aqiLevel}
 		<rect
 			x={usableArea.left}
@@ -180,14 +235,16 @@
 		/>
 	{/each}
 	
-	<path class="shadedArea" d={area(monthData)}/>
+	<!-- draw table elements in order so last drawn are in front -->
+	<path class="shadedArea" d={area(findMonthData(selectedData))}/>
 	<g class= "grid-lines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridLinesRef}></g>
 	<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
 	<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
+	<path class="stationMeanLine" d={line(findMonthData(selectedData))} />
 
-	<path d={line(monthData)} fill="none" stroke = "black" stroke-width="1.5"/>
 	
 </svg>
+
 
 <style>
 	.shadedArea {
@@ -197,6 +254,12 @@
 	.grid-lines {
 		color: black;
 		opacity: .1;
+	}
+
+	.stationMeanLine {
+		stroke: black;
+		fill: none;
+		stroke-width: 1.5;
 	}
 </style>
 

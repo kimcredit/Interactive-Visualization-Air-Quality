@@ -20,21 +20,26 @@
 			'https://dig.cmu.edu/datavis-fall-2025/assignments/data/%5BUSA-Pennsylvania-Pittsburgh%5D_daily-avg.csv'
 	};
 
-	let selectedDataset: keyof typeof datasets = $state('lawrenceville');
 
 	const data = $derived.by(() =>
-		d3.csv(datasets[selectedDataset], (d: any) => ({
-			city: d.City,
-			country: d.Country,
-			mainPollutant: d['Main pollutant'],
-			pm25: +d['PM2.5'],
-			state: d.State,
-			stationName: d['Station name'],
-			timestamp: new Date(d['Timestamp(UTC)']),
-			usAqi: +d['US AQI']
-		}))	
+		Promise.all(
+			Object.values(datasets).map((url) =>
+				d3.csv(url, (d: any) => ({
+					city: d.City,
+					country: d.Country,
+					mainPollutant: d['Main pollutant'],
+					pm25: +d['PM2.5'],
+					state: d.State,
+					stationName: d['Station name'] || 'Pittsburgh',
+					timestamp: new Date(d['Timestamp(UTC)']),
+					usAqi: +d['US AQI']
+				}))
+			)
+		).then((allData) => allData.flat())
 	);
 </script>
+
+
 
 {#await data}
 	<!-- promise is pending -->
@@ -42,14 +47,6 @@
 {:then data}
 	<!-- promise was fulfilled or not a Promise -->
 	<h2>AQI Chart</h2>
-		
-	<select class="dropdownMenu" bind:value={selectedDataset}>
-		{#each Object.keys(datasets) as dataset}
-			<option value={dataset}>
-				{dataset}
-			</option>
-		{/each}
-	</select>
 
 	<AQIChart {data} />
 {:catch error}
