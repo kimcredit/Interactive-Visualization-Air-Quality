@@ -170,9 +170,6 @@
 
 
 
-
-
-
 <!-- dropdown menu that has an 'all' option showing the total data points, or options for each station. 
 when a station is selected, it changes the value of 'thisStation' to be the selected station
 when 'all selected' is seelcted, it changes the value of 'thisStation' to be null -->

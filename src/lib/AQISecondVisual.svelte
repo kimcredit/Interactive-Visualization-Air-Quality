@@ -86,7 +86,6 @@
                     mean
                     };
                 }
-                
             }
         );
     }
@@ -140,6 +139,15 @@
             })
     );
 
+    let colorScale = $derived(
+		d3
+			.scaleThreshold<number , string>()
+			.domain(
+                aqiLevels
+                    .filter((d) => d.max !== undefined)
+                    .map((d) => d.max))
+			.range(aqiLevels.map((d) => d.color))
+	);
 
    	let xScale = $derived(
 		d3
@@ -176,8 +184,8 @@
             x={xScale(day.date)}
             y={usableArea.top}
             width={width / numberDays}
-            height={usableArea.bottom - usableArea.top}
-            fill="grey"
+            height={(usableArea.bottom - usableArea.top)}
+            fill={colorScale(day.mean ?? 0)}
         />
     {/each}
 
