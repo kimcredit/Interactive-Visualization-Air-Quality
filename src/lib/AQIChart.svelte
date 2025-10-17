@@ -13,7 +13,11 @@
 	}
 
 	// properties this component accepts
-	const { data }: { data: Item[] } = $props();
+	let { data, thisStation= $bindable() }: { data: Item[], thisStation: string | null } = $props();
+
+	$effect(() => {
+		console.log('AQIChart thisStation:', thisStation);
+	});
 
 	// chart dimension variables
 	let width = $state(700);
@@ -37,9 +41,7 @@
 		{ name: 'Hazardous', min: 300, color: '#a06a7b' }
 	];
 
-	//variable to hold current station (or null if none are selected)
-	//default is set to lawrenceville, the station shown in the assigment example
-	let thisStation: string | null = $state("Lawrenceville");
+
 
 	//checkbox true/false for showing raw data
 	let dataPointsOn = $state(false);

@@ -38,6 +38,16 @@
 			)
 		).then((allData) => allData.flat())
 	);
+
+	//variable to hold current station (or null if none are selected)
+	//default is set to lawrenceville, the station shown in the assigment example
+	let thisStation: string | null = $state("Lawrenceville");
+
+	// ADD THIS:
+	$effect(() => {
+		console.log('Parent thisStation:', thisStation);
+	});
+	
 </script>
 
 
@@ -49,11 +59,11 @@
 	<!-- promise was fulfilled or not a Promise -->
 	<h2 class="title">AQI Chart</h2>
 
-	<AQIChart {data} />
+	<AQIChart {data} bind:thisStation/>
 
 	<h2 class="title">AQI Chart 2</h2>
 
-	<AQISecondVisual {data} />
+	<AQISecondVisual {data} bind:thisStation />
 
 {:catch error}
 	<!-- promise was rejected -->

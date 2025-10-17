@@ -2,7 +2,11 @@
 	import * as d3 from 'd3';
 
     // properties this component accepts
-	const { data }: { data: Item[] } = $props();
+	let { data, thisStation = $bindable() }: { data: Item[], thisStation: string | null } = $props();
+
+    $effect(() => {
+		console.log('AQISecondVisual thisStation:', thisStation);
+	});
 
     interface Item {
 		city: string;
@@ -56,7 +60,7 @@
 		{ name: 'Hazardous', min: 300, color: '#a06a7b' }
 	];
     
-    let thisStation: string | null = $state("Pittsburgh");
+    // let thisStation: string | null = $state("Pittsburgh");
 
     const selectedData = $derived(
 		thisStation 
