@@ -58,16 +58,29 @@
             ),
             ([date, mean]) => {
                 let [month, day] = date.split('-').map(Number);
-                return {
+                if (month === 11) {
+                    return {
+                    date: new Date(1999, month, day),
+                    mean
+                }
+                } else {
+                    return {
                     date: new Date(2000, month, day),
                     mean
-                };
+                    };
+                }
+                
             }
         );
     }
 
+
     let dailyAqi = $derived(findDailyAqi(selectedData));
 
+    //hold number of days for shape generator
+    let numberDays = $derived(d3.count(dailyAqi, (d) => d.date.getTime()));
+
+    
     //find the season of each date approximated by month, not by solstice/equinox date
     function getSeason(date: Date) {
         //find the month and add 1 because it's 0-11 which is confusing for months
@@ -85,7 +98,7 @@
     }
 
     //group the data by seasons - first compare seasons, then compare dates within that season
-    //this does not change the original dailyAqi 
+    //does this change original dailyAqi??
     const seasonGroup = $derived(
         Array.from(dailyAqi) 
             .sort((a, b) => {
@@ -112,11 +125,58 @@
             })
     );
 
+
+
+   	let xScale = $derived(
+		d3
+			.scaleTime()
+			.range([usableArea.left, usableArea.right])		
+			.domain(d3.extent(dailyAqi, (d) => d.date) as [Date, Date])
+		);         
+
+    
+    let xAxis = $derived(
+		d3
+			.axisBottom(xScale) //position on bottom of x axis
+            .ticks(d3.timeMonth) //show 1 tick per year
+			// .tickValues ([
+            //     new Date(1999, 11, 15),
+            //     new Date(2000, 0, 15),
+            //     new Date(2000, 1, 15),
+            //     new Date(2000, 2, 15),
+            //     new Date(2000, 3, 15),
+            //     new Date(2000, 4, 15),
+            //     new Date(2000, 5, 15),
+            //     new Date(2000, 6, 15),
+            //     new Date(2000, 7, 15),
+            //     new Date(2000, 8, 15),
+            //     new Date(2000, 9, 15),
+            //     new Date(2000, 10, 15)
+            // ]) //show 1 tick per month
+			.tickFormat(d3.timeFormat('%B') as any)); //format ticks as Months
+
+
+    let xAxisRef: SVGGElement;
+
+    $effect(() => {
+		if (xAxisRef && data.length > 0) {
+			d3
+				.select(xAxisRef)
+				.call(xAxis)
+		}
+	});
+
 </script>
 
 
 
 <h2>{thisStation}</h2>
+
+<svg {width} {height}>
+
+    <g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
+
+</svg>
 
 
 {#each seasonGroup as day}
