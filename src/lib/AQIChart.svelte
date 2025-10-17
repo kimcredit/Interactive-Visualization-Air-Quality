@@ -51,9 +51,6 @@
 		left: margin.left
 	});
 
-	// just for debugging; can be removed
-	$inspect(data);
-
 	//Colored AQI definitions
 	const aqiLevels = [
 		{ name: 'Good', min: 0, max: 50, color: '#9cd84e' },
@@ -174,9 +171,6 @@
 			d3
 				.select(xAxisRef)
 				.call(xAxis)
-				// .selectAll("text") 
-				// .attr("transform", "rotate(60)")
-				// .style("text-anchor", "start")
 		}
 	});
 
@@ -273,7 +267,7 @@ when 'all selected' is seelcted, it changes the value of 'thisStation' to be nul
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 		font-size: 10px;
 	}
-	
+
 	.menuItems {
 		margin-left: 40px;
 		display: flex;

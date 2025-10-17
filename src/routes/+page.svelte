@@ -1,5 +1,6 @@
 <script lang="ts">
 	import AQIChart from '$lib/AQIChart.svelte';
+	import AQISecondVisual from '$lib/AQISecondVisual.svelte';
 	import * as d3 from 'd3';
 
 	const datasets = {
@@ -49,6 +50,11 @@
 	<h2 class="title">AQI Chart</h2>
 
 	<AQIChart {data} />
+
+	<h2 class="title">AQI Chart 2</h2>
+
+	<AQISecondVisual {data} />
+
 {:catch error}
 	<!-- promise was rejected -->
 	<p>Something went wrong: {error.message}</p>
@@ -64,5 +70,4 @@
 		padding-left: 40px;
 	}
 
-	
 </style>
