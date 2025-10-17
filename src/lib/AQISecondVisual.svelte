@@ -73,21 +73,29 @@
         return Array.from(
             d3.rollup(
                 data,
-                (v) => d3.mean(v, (d) => d.usAqi),
+                (v) => ({
+                    mean: d3.mean(v, (d) => d.usAqi),
+                    maxAqi: d3.max(v, (d) => d.usAqi),
+                    minAqi: d3.min(v, (d) => d.usAqi)
+                }),
                 (d) => `${d.timestamp.getMonth()}-${d.timestamp.getDate()}`
             ),
-            ([date, mean]) => {
+            ([date, data]) => {
                 let [month, day] = date.split('-').map(Number);
                 //give december earlier year to set it in front of jan for seasonal organization
                 if (month === 11) {
                     return {
                     date: new Date(1999, month, day),
-                    mean
+                    mean: data.mean,
+                    maxAqi: data.maxAqi,
+                    minAqi: data.minAqi
                 }
                 } else {
                     return {
                     date: new Date(2000, month, day),
-                    mean
+                    mean: data.mean,
+                    maxAqi: data.maxAqi,
+                    minAqi: data.minAqi
                     };
                 }
             }
