@@ -17,7 +17,7 @@
 
     // chart dimension variables
 	let width = $state(700);
-	let height = $state(400);
+	let height = $state(200);
 	let margin = $state({top: 40, right: 20, bottom: 80, left: 40});
 
 	let usableArea = $derived({
@@ -29,6 +29,22 @@
 
     //seasons
     const seasons: Array<string> = ['Winter', 'Spring', 'Summer', 'Fall'];
+
+    //days (for x axis label orientation)
+    const tickDates: Array<Date> = [
+        new Date(1999, 11, 15),
+        new Date(2000, 0, 15),
+        new Date(2000, 1, 15),
+        new Date(2000, 2, 15),
+        new Date(2000, 3, 15),
+        new Date(2000, 4, 15),
+        new Date(2000, 5, 15),
+        new Date(2000, 6, 15),
+        new Date(2000, 7, 15),
+        new Date(2000, 8, 15),
+        new Date(2000, 9, 15),
+        new Date(2000, 10, 15)
+    ];
 
     //Colored AQI definitions
 	const aqiLevels = [
@@ -58,6 +74,7 @@
             ),
             ([date, mean]) => {
                 let [month, day] = date.split('-').map(Number);
+                //give december earlier year to set it in front of jan for seasonal organization
                 if (month === 11) {
                     return {
                     date: new Date(1999, month, day),
@@ -74,12 +91,10 @@
         );
     }
 
-
     let dailyAqi = $derived(findDailyAqi(selectedData));
 
     //hold number of days for shape generator
     let numberDays = $derived(d3.count(dailyAqi, (d) => d.date.getTime()));
-
     
     //find the season of each date approximated by month, not by solstice/equinox date
     function getSeason(date: Date) {
@@ -97,9 +112,9 @@
         }
     }
 
-    //group the data by seasons - first compare seasons, then compare dates within that season
+    //Sort the data by seasons - first compare seasons, then compare dates within that season
     //does this change original dailyAqi??
-    const seasonGroup = $derived(
+    const seasonSort = $derived(
         Array.from(dailyAqi) 
             .sort((a, b) => {
                 const season = d3.ascending(seasons.indexOf(getSeason(a.date)), seasons.indexOf(getSeason(b.date)));
@@ -126,7 +141,6 @@
     );
 
 
-
    	let xScale = $derived(
 		d3
 			.scaleTime()
@@ -138,21 +152,7 @@
     let xAxis = $derived(
 		d3
 			.axisBottom(xScale) //position on bottom of x axis
-            .ticks(d3.timeMonth) //show 1 tick per year
-			// .tickValues ([
-            //     new Date(1999, 11, 15),
-            //     new Date(2000, 0, 15),
-            //     new Date(2000, 1, 15),
-            //     new Date(2000, 2, 15),
-            //     new Date(2000, 3, 15),
-            //     new Date(2000, 4, 15),
-            //     new Date(2000, 5, 15),
-            //     new Date(2000, 6, 15),
-            //     new Date(2000, 7, 15),
-            //     new Date(2000, 8, 15),
-            //     new Date(2000, 9, 15),
-            //     new Date(2000, 10, 15)
-            // ]) //show 1 tick per month
+            .tickValues(tickDates)
 			.tickFormat(d3.timeFormat('%B') as any)); //format ticks as Months
 
 
@@ -169,21 +169,22 @@
 </script>
 
 
-
-<h2>{thisStation}</h2>
-
 <svg {width} {height}>
+
+    {#each seasonSort as day}
+        <rect
+            x={xScale(day.date)}
+            y={usableArea.top}
+            width={width / numberDays}
+            height={usableArea.bottom - usableArea.top}
+            fill="grey"
+        />
+    {/each}
 
     <g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
 
 </svg>
 
-
-{#each seasonGroup as day}
-    {#if day.mean}
-        <p>{day.date}: {day.mean}</p>
-    {/if}
-{/each}
 
 
 
