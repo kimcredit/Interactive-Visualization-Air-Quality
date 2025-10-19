@@ -1,6 +1,12 @@
 <script lang="ts">
 	import * as d3 from 'd3';
 
+    import {
+        computePosition,
+        autoPlacement,
+        offset,
+    } from '@floating-ui/dom';
+
     // properties this component accepts
 	let { data, thisStation = $bindable() }: { data: Item[], thisStation: string | null } = $props();
 
@@ -213,7 +219,27 @@
 		}
 	});
 
+    let commitTooltip : any;
+    let tooltipPosition = $state({x: 0, y: 0});
+    let tooltipIndex = $state(-1);
 
+    async function dayInteraction (index: number, evt : any) {
+    let hoveredDay = evt.target;
+
+        if (evt.type === "mouseenter" || evt.type === "focus") {
+            tooltipIndex = index;
+            tooltipPosition = await computePosition(hoveredDay, commitTooltip, {
+                strategy: "fixed", 
+                middleware: [
+                    offset(5), 
+                    autoPlacement()
+                ],
+            });
+        }   
+        else if (evt.type === "mouseleave" || evt.type === "blur") {
+            tooltipIndex= -1;
+        }
+    }
 
 </script>
 
@@ -240,8 +266,18 @@
         </svg>
 
         <svg {width} {height}>
-            {#each seasonSort as day}
-                <rect class="allDays"
+            {#each seasonSort as day, index}
+                <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+                <!-- svelte-ignore a11y_role_supports_aria_props -->
+                <rect class="allDays rectHover"
+                    onmouseenter={evt => dayInteraction(index, evt)}
+	                onmouseleave={evt => dayInteraction(index, evt)}
+                    onfocus={evt => dayInteraction(index, evt)}
+                    onblur={evt => dayInteraction(index, evt)}
+                    tabindex="0"
+                    role="tooltip"
+                    aria-describedby="commit-tooltip"
+                    aria-haspopup="true"
                     x={xScale(day.date)}
                     y={usableArea.top}
                     width={width / numberDays}
@@ -251,15 +287,20 @@
             {/each}
             <g class="x-axis" transform="translate(0, {usableArea.top})" bind:this={xAxisRef}></g>
         </svg>
-        
+     
         <p class="chartTitle">Seasonal AQI Trends for {thisStation !== null ? (thisStation + " Station") : "All Stations"} in Pennsylvania, using data collected from {firstYear} to {lastYear}</p>
     </div>
+
+        <dl id="commit-tooltip" class="info tooltip"  hidden={tooltipIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={commitTooltip}>
+            <dt>Commit</dt>
+            <dd>test</dd>
+        </dl>
 
     <div class="sidebar">
         <div class="dataSelection">
             <h4 class="radioMenuTitle">Select Data Filter:</h4>
             {#each calcList as calc}
-                <label class="radioLabel">
+                <label id="label" class="radioLabel">
                     <input class="radio" type="radio" bind:group={selectedCalc} value={calc.calc} />
                     {calc.name}
                 </label>
@@ -302,6 +343,39 @@
 
 * {
     font-family: sans-serif;
+}
+
+.rectHover {
+    transition-duration: 600ms;
+	transition-property: opacity, visibility;
+
+	&:hover {
+		transform: scale(5, 1.05);
+        transform-origin: right;
+        transform-box: fill-box;
+    }
+}
+
+.tooltip {
+    position: fixed;
+    z-index: 1000;
+}
+
+dl.info {
+    display: grid;
+    background-color: white;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    border-radius: 5px;
+	transition-duration: 300ms;
+    max-width: 200px;
+    height: 70px;
+    padding: 10px;
+	transition-property: opacity, visibility;
+
+	&[hidden]:not(:hover, :focus-within) {
+		opacity: 0;
+		visibility: hidden;
+	}
 }
 
 .visual {
@@ -378,6 +452,12 @@
 
 .allDays {
     opacity: .7;
+    outline: none;
+
+        &:hover {
+            opacity: 1;
+            isolation: isolate;
+        }
 }
 
 .x-axis {

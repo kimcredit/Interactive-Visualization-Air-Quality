@@ -18,7 +18,7 @@
 	// chart dimension variables
 	let width = $state(700);
 	let height = $state(400);
-	let margin = $state({top: 0, right: 40, bottom: 80, left: 40});
+	let margin = $state({top: 5, right: 40, bottom: 80, left: 40});
 
 	let usableArea = $derived({
 		top: margin.top,
@@ -256,6 +256,7 @@
 		justify-content: top;
 		border-style: solid;
 		border-color: lightgrey;
+		margin-top: 5px;
 		margin-left: 30px;
 		padding: 10px;
 		width: 180px;
