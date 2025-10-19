@@ -91,7 +91,7 @@
             d3.rollup(
                 data,
                 (v) => ({
-                    mean: d3.mean(v, (d) => d.usAqi),
+                    mean: d3.mean(v, (d) => d.usAqi)?.toFixed(0),
                     maxAqi: d3.max(v, (d) => d.usAqi),
                     minAqi: d3.min(v, (d) => d.usAqi),
                     //store the year of the maxAQI and minAQI but don't use it to sort
@@ -224,14 +224,14 @@
     let tooltipIndex = $state(-1);
 
     async function dayInteraction (index: number, evt : any) {
-    let hoveredDay = evt.target;
+        let hoveredDay = evt.target;
 
         if (evt.type === "mouseenter" || evt.type === "focus") {
             tooltipIndex = index;
             tooltipPosition = await computePosition(hoveredDay, commitTooltip, {
                 strategy: "fixed", 
                 middleware: [
-                    offset(5), 
+                    offset(7), 
                     autoPlacement()
                 ],
             });
@@ -290,11 +290,20 @@
      
         <p class="chartTitle">Seasonal AQI Trends for {thisStation !== null ? (thisStation + " Station") : "All Stations"} in Pennsylvania, using data collected from {firstYear} to {lastYear}</p>
     </div>
-
+        
         <dl id="commit-tooltip" class="info tooltip"  hidden={tooltipIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={commitTooltip}>
-            <dt>Commit</dt>
-            <dd>test</dd>
+            <dt class="dataType dataTypeTitle">{d3.timeFormat('%B %d')(seasonSort[tooltipIndex]?.date)}</dt>
+            <dt class="dataType">Mean AQI:</dt>
+            <dd class="dataContent">{seasonSort[tooltipIndex]?.mean}</dd>
+            <dt class="dataType">Max AQI:</dt>
+            <dd class="dataContent">{seasonSort[tooltipIndex]?.maxAqi}</dd>
+            <dd class="dataContent year">({seasonSort[tooltipIndex]?.maxAqiYear})</dd>
+            <dt class="dataType">Min AQI:</dt>
+            <dd class="dataContent">{seasonSort[tooltipIndex]?.minAqi}</dd>
+            <dd class="dataContent year">({seasonSort[tooltipIndex]?.minAqiYear})</dd>
+            
         </dl>
+        
 
     <div class="sidebar">
         <div class="dataSelection">
@@ -354,28 +363,6 @@
         transform-origin: right;
         transform-box: fill-box;
     }
-}
-
-.tooltip {
-    position: fixed;
-    z-index: 1000;
-}
-
-dl.info {
-    display: grid;
-    background-color: white;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    border-radius: 5px;
-	transition-duration: 300ms;
-    max-width: 200px;
-    height: 70px;
-    padding: 10px;
-	transition-property: opacity, visibility;
-
-	&[hidden]:not(:hover, :focus-within) {
-		opacity: 0;
-		visibility: hidden;
-	}
 }
 
 .visual {
@@ -481,5 +468,72 @@ dl.info {
     opacity: .7;
 }
 
+.tooltip {
+    position: fixed;
+    z-index: 1000;
+}
+
+dl.info {
+    display: grid;
+    grid-template-columns:3fr 1fr 1fr;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    border-radius: 5px;
+	transition-duration: 300ms;
+    width: 130px;
+    height: 70px;
+    padding: 20px;
+	transition-property: opacity, visibility;
+
+	&[hidden]:not(:hover, :focus-within) {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+dd {
+    margin-inline-start: 5px;
+}
+
+.dataType {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    font-size: 12px;
+    text-anchor: right;
+    justify-self: end;
+}
+
+.dataContent {
+    font-weight: bold;
+    font-size: 12px;
+    text-anchor: left;
+    justify-content: start;
+    justify-self: start;
+}
+
+.dataTypeTitle {
+    grid-column-start: 1;
+    grid-column-end: 5;
+    justify-content: center;
+    justify-self: center;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 5px;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.year {
+    grid-column-start: 4;
+    grid-column-end: 5;
+    font-size: 10px;
+    font-weight: normal;
+    text-anchor: left;
+    justify-content: start;
+    justify-self: start;
+}
 
 </style>
