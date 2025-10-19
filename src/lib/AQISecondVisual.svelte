@@ -21,8 +21,12 @@
 
     // chart dimension variables
 	let width = $state(700);
-	let height = $state(175);
-	let margin = $state({top: 15, right: 20, bottom: 80, left: 40});
+	let height = $state(150);
+	let margin = $state({top: 15, right: 40, bottom: 20, left: 40});
+
+    //legend dimension variables
+    let legWidth = $state(175);
+    let legHeight = $state(20);
 
 	let usableArea = $derived({
 		top: margin.top,
@@ -67,6 +71,17 @@
 			? data.filter((d) => d.stationName === thisStation)
 			: data
 	);
+
+    //min-max year calculations for informing viewer about the data range
+    let firstYear = $derived(d3.min(selectedData, (d) => d.timestamp.getFullYear()));
+    let lastYear = $derived(d3.max(selectedData, (d) => d.timestamp.getFullYear()));
+
+    let selectedCalc = $state('mean');
+
+    const calcList = [
+        {calc: 'mean', name: 'Mean AQI'},
+        {calc: 'maxAqi', name: 'Max AQI'}
+    ];
     
     //find the mean AQI for each day in the year
     function findDailyAqi(data: Item[]) {
@@ -166,14 +181,14 @@
             .scaleBand()
             .range([usableArea.left, usableArea.right])
             .domain(seasons)
-    )
+    );
 
    	let xScale = $derived(
 		d3
 			.scaleTime()
 			.range([usableArea.left, usableArea.right])		
 			.domain(d3.extent(dailyAqi, (d) => d.date) as [Date, Date])
-		);         
+    );         
 
     
     let xAxis = $derived(
@@ -183,9 +198,7 @@
 			.tickFormat(d3.timeFormat('%B') as any) //format ticks as Months
             .tickSize(0)
             .tickPadding(6)
-        );
-            
-
+    );
 
     let xAxisRef: SVGGElement;
 
@@ -199,49 +212,84 @@
 
 
 
-    //have a line that tells people it's the seasonal aqi trends for the location
-    //and from data collected across about how many years spanning what beginning year and ending year
-
 </script>
 
-<div class='chart'>
-    <svg {width} height="30px">
-        {#each seasons as season}
-            <rect class='seasonRect'
-                x={seasonLabelScale(season)}
-                y=0
-                width={seasonLabelScale.bandwidth()+2}
-                height="26px"
-            />
-            <text
-                class='seasonLabel'
-                x={(seasonLabelScale(season) ?? 0) + seasonLabelScale.bandwidth() / 2}
-                y="13"
-                dy="0.35em"
-            >
-                {season}
-            </text>
-        {/each}
 
-    </svg>
+<div class="visual">
+    <div class='chart'>
+        <svg {width} height="30px">
+            {#each seasons as season}
+                <rect class='seasonRect'
+                    x={seasonLabelScale(season)}
+                    y=0
+                    width={seasonLabelScale.bandwidth()+2}
+                    height="26px"
+                />
+                <text
+                    class='seasonLabel'
+                    x={(seasonLabelScale(season) ?? 0) + seasonLabelScale.bandwidth() / 2}
+                    y="13"
+                    dy="0.35em"
+                >
+                    {season}
+                </text>
+            {/each}
+        </svg>
 
-    <svg {width} {height}>
+        <svg {width} {height}>
+            {#each seasonSort as day}
+                <rect class="allDays"
+                    x={xScale(day.date)}
+                    y={usableArea.top}
+                    width={width / numberDays}
+                    height={(usableArea.bottom - usableArea.top)}
+                    fill={day[selectedCalc as keyof typeof day] !== undefined ? colorScale(day[selectedCalc as keyof typeof day] as number) : 'lightgrey'}
+                />
+            {/each}
+            <g class="x-axis" transform="translate(0, {usableArea.top})" bind:this={xAxisRef}></g>
+        </svg>
+        
+        <p class="chartTitle">Seasonal AQI Trends for {thisStation !== null ? (thisStation + " Station") : "All Stations"} in Pennsylvania, using data collected from {firstYear} to {lastYear}</p>
+    </div>
 
-        {#each seasonSort as day}
-            <rect
-                x={xScale(day.date)}
-                y={usableArea.top}
-                width={width / numberDays}
-                height={(usableArea.bottom - usableArea.top)}
-                fill={day.mean !== undefined ? colorScale(day.mean) : 'lightgrey'}
-            />
-        {/each}
+    <div class="sidebar">
+        <div class="dataSelection">
+            <h4 class="radioMenuTitle">Select Data Filter:</h4>
+            {#each calcList as calc}
+                <label class="radioLabel">
+                    <input class="radio" type="radio" bind:group={selectedCalc} value={calc.calc} />
+                    {calc.name}
+                </label>
+            {/each}
+        </div>
 
-        <g class="x-axis" transform="translate(0, {usableArea.top})" bind:this={xAxisRef}></g>
-
-    </svg>
+        <div class="legend">
+            <p class="legendTitle">Legend</p>
+            
+            <svg>
+                {#each aqiLevels as aqi, index}
+                    <rect class="legendRect"
+                        y={index * (legHeight+2)}
+                        width={legWidth}
+                        height={legHeight}
+                        fill={aqi.color}
+                    />
+                    <text 
+                        class="legendText"
+                        x={10}
+                        y={index * (legHeight+2) + (legHeight/2)}
+                        dy="0.35em"
+                    >
+                        {aqi.name}
+                    </text>
+                {/each}
+            </svg>
+        </div>
+    </div>
+    
 
 </div>
+
 
 
 
@@ -253,9 +301,61 @@
     font-family: sans-serif;
 }
 
-.chart {
+.visual {
+    display: flex;
+    justify-content: top;
+    align-items: center; 
+}
+
+.chartTitle {
+    width: 700px;
+    margin: 0px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.sidebar {
     display: flex;
     flex-direction: column;
+    align-items: left;
+    justify-content:space-between;
+    border-style: solid;
+    border-color: lightgrey;
+    padding: 10px;
+    margin-left: 30px;
+    width: 180px;
+    height: 240px;
+}
+
+.dataSelection {
+    font-size: 10px;
+    padding-bottom: 10px;
+}
+
+.radioMenuTitle {
+    margin: 0px 0px 5px 0px;
+}
+
+.radioLabel {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    padding: 5px 0px 0px 0px;
+}
+
+.radio {
+    margin-right: 10px;
+    margin-left: 0px;
+}
+
+.chart {
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content:top;
+    width: 700px;
+    height: 275px;
 }
 
 .seasonRect {
@@ -269,8 +369,33 @@
     font-size: 12px;
 }
 
+.legendText {
+    font-size: 10px;
+}
+
+.allDays {
+    opacity: .7;
+}
+
 .x-axis {
     stroke-width: 0;
+}
+
+.legend {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 180px;
+
+}
+
+.legendTitle {
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.legendRect {
+    opacity: .7;
 }
 
 

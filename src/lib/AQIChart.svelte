@@ -22,7 +22,7 @@
 	// chart dimension variables
 	let width = $state(700);
 	let height = $state(400);
-	let margin = $state({top: 40, right: 20, bottom: 80, left: 40});
+	let margin = $state({top: 0, right: 40, bottom: 80, left: 40});
 
 	let usableArea = $derived({
 		top: margin.top,
@@ -171,71 +171,76 @@
 </script>
 
 
+<div class="visualization">
+	<div class="chart">
+		<svg {width} {height}>
+			<!-- background colors as inidividual rectangles using the full x width and using the aqiLevel's min and max to set each rectangle's starting point and height
+			only show the bands if they are within the y scale height -->
+			{#each aqiLevels as aqiLevel}
+				<rect
+					x={usableArea.left}
+					y={Math.max(usableArea.top, yScale(aqiLevel.max ?? 400))}
+					width={usableArea.right - usableArea.left}
+					height={Math.max(
+						0,
+						Math.min(yScale(aqiLevel.min), usableArea.bottom) -
+						Math.max(usableArea.top, yScale(aqiLevel.max ?? 400))
+					)}
+					fill={aqiLevel.color}
+					opacity="0.5"
+				/>
+			{/each}
+			
+			<!-- draw table elements in order so last drawn are in front -->
+			<path class="shadedArea" d={area(findMonthData(selectedData))}/>
+			<g class= "grid-lines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridLinesRef}></g>
+			<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
+			<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
+			
+			<!-- show datapoints when checkbox is checked  -->
+			{#if dataPointsOn}
+				{#each selectedData as datapoints}
+					<circle class="dataPoints"
+							cx={xScale(datapoints.timestamp)}
+							cy={yScale(datapoints.usAqi)}
+							r=".85"
+					/>
+				{/each}
+			{/if}
+			
+			<path class="stationMeanLine" d={line(findMonthData(selectedData))} />
 
-<!-- dropdown menu that has an 'all' option showing the total data points, or options for each station. 
-when a station is selected, it changes the value of 'thisStation' to be the selected station
-when 'all selected' is seelcted, it changes the value of 'thisStation' to be null -->
-<div class="menuItems">
-	<select class="dropdownMenu" bind:value={thisStation}>
-		<option value={null}>
-			All Selected {data.length}
-		</option>
-		{#each stationRecordCount as station}
-			<option value={station.station}>
-				{station.station} ({station.count})
-			</option>
-		{/each}
-	</select>
-
-	<div class="checkbox"> 
-		<p class="checkboxLabel">Show Raw Data</p>
-		<input type="checkbox" bind:checked={dataPointsOn}/>
+		</svg>
 	</div>
 
-	<!-- display of the record count for the currently selected station -->
-	<p class="recordCount" >Number of Records: {selectedData.length}</p>
+	
+	<!-- dropdown menu that has an 'all' option showing the total data points, or options for each station. 
+	when a station is selected, it changes the value of 'thisStation' to be the selected station
+	when 'all selected' is seelcted, it changes the value of 'thisStation' to be null -->
+	<div class="menuItems">
+		<select class="dropdownMenu" bind:value={thisStation}>
+			<option value={null}>
+				All Selected {data.length}
+			</option>
+			{#each stationRecordCount as station}
+				<option value={station.station}>
+					{station.station} ({station.count})
+				</option>
+			{/each}
+		</select>
+
+		<div class="checkbox"> 
+			<p class="checkboxLabel">Show Raw Data</p>
+			<input type="checkbox" bind:checked={dataPointsOn}/>
+		</div>
+
+		<!-- display of the record count for the currently selected station -->
+		<p class="recordCount" >Number of Records: {selectedData.length}</p>
+	</div>
+
 </div>
 
 
-<svg {width} {height}>
-
-	<!-- background colors as inidividual rectangles using the full x width and using the aqiLevel's min and max to set each rectangle's starting point and height
-	only show the bands if they are within the y scale height -->
-	{#each aqiLevels as aqiLevel}
-		<rect
-			x={usableArea.left}
-			y={Math.max(usableArea.top, yScale(aqiLevel.max ?? 400))}
-			width={usableArea.right - usableArea.left}
-			height={Math.max(
-				0,
-				Math.min(yScale(aqiLevel.min), usableArea.bottom) -
-				Math.max(usableArea.top, yScale(aqiLevel.max ?? 400))
-			)}
-			fill={aqiLevel.color}
-			opacity="0.5"
-		/>
-	{/each}
-	
-	<!-- draw table elements in order so last drawn are in front -->
-	<path class="shadedArea" d={area(findMonthData(selectedData))}/>
-	<g class= "grid-lines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridLinesRef}></g>
-	<g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
-	<g class="y-axis" transform="translate({usableArea.left}, 0)" bind:this={yAxisRef}></g>
-	
-	<!-- show datapoints when checkbox is checked  -->
-	{#if dataPointsOn}
-		{#each selectedData as datapoints}
-			<circle class="dataPoints"
-					cx={xScale(datapoints.timestamp)}
-					cy={yScale(datapoints.usAqi)}
-					r=".85"
-			/>
-		{/each}
-	{/if}
-	
-	<path class="stationMeanLine" d={line(findMonthData(selectedData))} />
-
-</svg>
 
 
 <style>
@@ -245,13 +250,21 @@ when 'all selected' is seelcted, it changes the value of 'thisStation' to be nul
 		font-size: 10px;
 	}
 
+	.visualization {
+		display: flex;
+	}
+
 	.menuItems {
-		margin-left: 40px;
 		display: flex;
 		flex-direction: column;
 		align-items: left;
-		justify-content: space-between;
-		max-width: 20%;
+		justify-content: top;
+		border-style: solid;
+		border-color: lightgrey;
+		margin-left: 30px;
+		padding: 10px;
+		width: 180px;
+		height: 100px;
 	}
 
 	.dropdownMenu {

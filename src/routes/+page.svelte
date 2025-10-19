@@ -61,7 +61,7 @@
 
 	<AQIChart {data} bind:thisStation/>
 
-	<h4 class="title">AQI Chart 2</h4>
+	<h2 class="title">AQI Seasonal Trends</h2>
 
 	<AQISecondVisual {data} bind:thisStation />
 
