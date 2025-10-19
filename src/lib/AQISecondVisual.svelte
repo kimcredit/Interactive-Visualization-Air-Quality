@@ -131,6 +131,8 @@
     //hold number of days for shape generator
     let numberDays = $derived(d3.count(dailyAqi, (d) => d.date.getTime()));
     
+    $inspect("numberDays: ", numberDays);
+    
     //find the season of each date approximated by month, not by solstice/equinox date
     function getSeason(date: Date) {
         //find the month and add 1 because it's 0-11 which is confusing for months
@@ -295,12 +297,14 @@
             <dt class="dataType dataTypeTitle">{d3.timeFormat('%B %d')(seasonSort[tooltipIndex]?.date)}</dt>
             <dt class="dataType">Mean AQI:</dt>
             <dd class="dataContent">{seasonSort[tooltipIndex]?.mean}</dd>
-            <dt class="dataType">Max AQI:</dt>
-            <dd class="dataContent">{seasonSort[tooltipIndex]?.maxAqi}</dd>
-            <dd class="dataContent year">({seasonSort[tooltipIndex]?.maxAqiYear})</dd>
-            <dt class="dataType">Min AQI:</dt>
-            <dd class="dataContent">{seasonSort[tooltipIndex]?.minAqi}</dd>
-            <dd class="dataContent year">({seasonSort[tooltipIndex]?.minAqiYear})</dd>
+            {#if ((Number(seasonSort[tooltipIndex]?.mean)) !== (seasonSort[tooltipIndex]?.maxAqi)) && ((Number(seasonSort[tooltipIndex]?.mean)) !== (seasonSort[tooltipIndex]?.minAqi))}
+                <dt class="dataType">Max AQI:</dt>
+                <dd class="dataContent">{seasonSort[tooltipIndex]?.maxAqi}</dd>
+                <dd class="dataContent year">({seasonSort[tooltipIndex]?.maxAqiYear})</dd>
+                <dt class="dataType">Min AQI:</dt>
+                <dd class="dataContent">{seasonSort[tooltipIndex]?.minAqi}</dd>
+                <dd class="dataContent year">({seasonSort[tooltipIndex]?.minAqiYear})</dd>
+            {/if}
             
         </dl>
         
