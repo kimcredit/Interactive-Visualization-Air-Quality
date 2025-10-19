@@ -15,10 +15,6 @@
 	// properties this component accepts
 	let { data, thisStation= $bindable() }: { data: Item[], thisStation: string | null } = $props();
 
-	$effect(() => {
-		console.log('AQIChart thisStation:', thisStation);
-	});
-
 	// chart dimension variables
 	let width = $state(700);
 	let height = $state(400);
@@ -230,12 +226,12 @@
 		</select>
 
 		<div class="checkbox"> 
-			<p class="checkboxLabel">Show Raw Data</p>
+			<p class="checkboxLabel">Show Raw Data: </p>
 			<input type="checkbox" bind:checked={dataPointsOn}/>
 		</div>
 
 		<!-- display of the record count for the currently selected station -->
-		<p class="recordCount" >Number of Records: {selectedData.length}</p>
+		<p class="recordCount"><strong>Number of Records:</strong> {selectedData.length}</p>
 	</div>
 
 </div>
@@ -244,7 +240,6 @@
 
 
 <style>
-
 	* {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 		font-size: 10px;
@@ -284,11 +279,11 @@
 
 	.checkboxLabel {
 		padding-right: 10px;
+		font-weight: bold;
 	}
 
 	.recordCount {
 		margin-top: 5px;
-
 	}
 
 	.shadedArea {

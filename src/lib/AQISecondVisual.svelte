@@ -4,10 +4,6 @@
     // properties this component accepts
 	let { data, thisStation = $bindable() }: { data: Item[], thisStation: string | null } = $props();
 
-    $effect(() => {
-		console.log('AQISecondVisual thisStation:', thisStation);
-	});
-
     interface Item {
 		city: string;
 		country: string;
@@ -91,7 +87,10 @@
                 (v) => ({
                     mean: d3.mean(v, (d) => d.usAqi),
                     maxAqi: d3.max(v, (d) => d.usAqi),
-                    minAqi: d3.min(v, (d) => d.usAqi)
+                    minAqi: d3.min(v, (d) => d.usAqi),
+                    //store the year of the maxAQI and minAQI but don't use it to sort
+                    maxAqiYear: d3.greatest(v, (d) => d.usAqi)?.timestamp.getFullYear(),
+                    minAqiYear: d3.least(v, (d) => d.usAqi)?.timestamp.getFullYear()
                 }),
                 (d) => `${d.timestamp.getMonth()}-${d.timestamp.getDate()}`
             ),
@@ -103,14 +102,18 @@
                     date: new Date(1999, month, day),
                     mean: data.mean,
                     maxAqi: data.maxAqi,
-                    minAqi: data.minAqi
+                    minAqi: data.minAqi,
+                    maxAqiYear: data.maxAqiYear,
+                    minAqiYear: data.minAqiYear
                 }
                 } else {
                     return {
                     date: new Date(2000, month, day),
                     mean: data.mean,
                     maxAqi: data.maxAqi,
-                    minAqi: data.minAqi
+                    minAqi: data.minAqi,
+                    maxAqiYear: data.maxAqiYear,
+                    minAqiYear: data.minAqiYear
                     };
                 }
             }

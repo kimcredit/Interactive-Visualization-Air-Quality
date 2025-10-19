@@ -42,11 +42,6 @@
 	//variable to hold current station (or null if none are selected)
 	//default is set to lawrenceville, the station shown in the assigment example
 	let thisStation: string | null = $state("Lawrenceville");
-
-	// ADD THIS:
-	$effect(() => {
-		console.log('Parent thisStation:', thisStation);
-	});
 	
 </script>
 
