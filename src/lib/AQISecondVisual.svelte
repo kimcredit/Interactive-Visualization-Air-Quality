@@ -21,8 +21,8 @@
 
     // chart dimension variables
 	let width = $state(700);
-	let height = $state(200);
-	let margin = $state({top: 40, right: 20, bottom: 80, left: 40});
+	let height = $state(175);
+	let margin = $state({top: 15, right: 20, bottom: 80, left: 40});
 
 	let usableArea = $derived({
 		top: margin.top,
@@ -161,6 +161,13 @@
 			.range(aqiLevels.map((d) => d.color))
 	);
 
+    let seasonLabelScale = $derived(
+        d3
+            .scaleBand()
+            .range([usableArea.left, usableArea.right])
+            .domain(seasons)
+    )
+
    	let xScale = $derived(
 		d3
 			.scaleTime()
@@ -171,9 +178,13 @@
     
     let xAxis = $derived(
 		d3
-			.axisBottom(xScale) //position on bottom of x axis
+			.axisTop(xScale) //position on bottom of x axis
             .tickValues(tickDates)
-			.tickFormat(d3.timeFormat('%B') as any)); //format ticks as Months
+			.tickFormat(d3.timeFormat('%B') as any) //format ticks as Months
+            .tickSize(0)
+            .tickPadding(6)
+        );
+            
 
 
     let xAxisRef: SVGGElement;
@@ -186,28 +197,81 @@
 		}
 	});
 
+
+
+    //have a line that tells people it's the seasonal aqi trends for the location
+    //and from data collected across about how many years spanning what beginning year and ending year
+
 </script>
 
+<div class='chart'>
+    <svg {width} height="30px">
+        {#each seasons as season}
+            <rect class='seasonRect'
+                x={seasonLabelScale(season)}
+                y=0
+                width={seasonLabelScale.bandwidth()+2}
+                height="26px"
+            />
+            <text
+                class='seasonLabel'
+                x={(seasonLabelScale(season) ?? 0) + seasonLabelScale.bandwidth() / 2}
+                y="13"
+                dy="0.35em"
+            >
+                {season}
+            </text>
+        {/each}
 
-<svg {width} {height}>
+    </svg>
 
-    {#each seasonSort as day}
-        <rect
-            x={xScale(day.date)}
-            y={usableArea.top}
-            width={width / numberDays}
-            height={(usableArea.bottom - usableArea.top)}
-            fill={colorScale(day.mean ?? 0)}
-        />
-    {/each}
+    <svg {width} {height}>
 
-    <g class="x-axis" transform="translate(0, {usableArea.bottom})" bind:this={xAxisRef}></g>
+        {#each seasonSort as day}
+            <rect
+                x={xScale(day.date)}
+                y={usableArea.top}
+                width={width / numberDays}
+                height={(usableArea.bottom - usableArea.top)}
+                fill={day.mean !== undefined ? colorScale(day.mean) : 'lightgrey'}
+            />
+        {/each}
 
-</svg>
+        <g class="x-axis" transform="translate(0, {usableArea.top})" bind:this={xAxisRef}></g>
+
+    </svg>
+
+</div>
+
 
 
 
 
 <style>
+
+* {
+    font-family: sans-serif;
+}
+
+.chart {
+    display: flex;
+    flex-direction: column;
+}
+
+.seasonRect {
+    fill: lightgray;
+    stroke: white;
+    stroke-width: 2px;
+}
+
+.seasonLabel {
+    text-anchor: middle;
+    font-size: 12px;
+}
+
+.x-axis {
+    stroke-width: 0;
+}
+
 
 </style>

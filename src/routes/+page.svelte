@@ -61,7 +61,7 @@
 
 	<AQIChart {data} bind:thisStation/>
 
-	<h2 class="title">AQI Chart 2</h2>
+	<h4 class="title">AQI Chart 2</h4>
 
 	<AQISecondVisual {data} bind:thisStation />
 
