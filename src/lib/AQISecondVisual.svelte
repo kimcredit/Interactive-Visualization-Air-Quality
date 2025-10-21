@@ -233,8 +233,12 @@
             tooltipPosition = await computePosition(hoveredDay, commitTooltip, {
                 strategy: "fixed", 
                 middleware: [
-                    offset(7), 
-                    autoPlacement()
+                    offset({
+                        mainAxis: 15,
+                    }),
+                    autoPlacement({
+                        allowedPlacements: ['left', 'right'],
+                    }),
                 ],
             });
         }   
@@ -292,6 +296,7 @@
      
         <p class="chartTitle">Seasonal AQI Trends for {thisStation !== null ? (thisStation + " Station") : "All Stations"} in Pennsylvania, using data collected from {firstYear} to {lastYear}</p>
     </div>
+        
         
         <dl id="commit-tooltip" class="info tooltip"  hidden={tooltipIndex === -1} style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px" bind:this={commitTooltip}>
             <dt class="dataType dataTypeTitle">{d3.timeFormat('%B %d')(seasonSort[tooltipIndex]?.date)}</dt>
@@ -486,7 +491,7 @@ dl.info {
     background-color: white;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 5px;
-	transition-duration: 300ms;
+	transition-duration: 0ms;
     width: 130px;
     height: 70px;
     padding: 20px;
